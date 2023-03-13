@@ -56,8 +56,8 @@ X_train, X_val, y_train, y_val = (
 
 # Regularization
 alpha0 = 0.0
-rho = 0.01
-alpha, alphas, losses = logistic_parameter_selection(X_train, X_val, y_train, y_val, alpha0, rho, max_iter=100, retall=True)
+rho = 0.1
+alpha, alphas, losses = logistic_parameter_selection(X_train, X_val, y_train, y_val, alpha0, rho, max_iter=10000, retall=True)
 beta_final = newton_logistic(X_train, y_train, alpha, beta, max_iter=50)
 
 fig, ax = plt.subplots(1,2)
@@ -67,18 +67,18 @@ plt.show()
 
 ## Optuna
 
-def objective(alpha):
-    alpha = alpha.suggest_float('alpha', -10, 10.0)
-    beta = newton_logistic(X_train, y_train, alpha, np.zeros(X_train.shape[1]))
-    return loss_logistic(X_val, y_val, -jnp.inf, beta)
+# def objective(alpha):
+#     alpha = alpha.suggest_float('alpha', -10, 10.0)
+#     beta = newton_logistic(X_train, y_train, alpha, np.zeros(X_train.shape[1]))
+#     return loss_logistic(X_val, y_val, -jnp.inf, beta)
 
-try:
-    import optuna
-    study = optuna.create_study()
-    study.optimize(objective, n_trials=100)
-    study.best_params
-except ImportError:
-    print("optuna not available")
+# try:
+#     import optuna
+#     study = optuna.create_study()
+#     study.optimize(objective, n_trials=100)
+#     study.best_params
+# except ImportError:
+#     print("optuna not available")
 
 # Plot
 
