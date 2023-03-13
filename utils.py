@@ -11,7 +11,8 @@ def plot_classification(X, y, betas, s=20, titles=None):
         s: optional size
         titles: optional titles
     """
-    cplot = y
+    cplot = np.array(y)
+    cplot = cplot[:, np.newaxis]
     n_betas = len(betas)
     fig, axs = plt.subplots(1, n_betas, sharex=True, sharey=True)
 
