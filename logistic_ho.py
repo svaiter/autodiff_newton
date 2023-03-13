@@ -6,7 +6,7 @@ from optim import newton
 def loss_logistic(X, y, alpha, beta):
     logits = jnp.exp(X @ beta)
     logits = logits / (1 + logits)
-    return jnp.sum(y * jnp.log(logits) + (1 - y) * jnp.log(1 - logits)) + alpha * jnp.sum(beta ** 2)
+    return - jnp.sum(y * jnp.log(logits) + (1 - y) * jnp.log(1 - logits)) + alpha * jnp.sum(beta ** 2)
 
 
 def grad_logistic(X, y, alpha, beta):
