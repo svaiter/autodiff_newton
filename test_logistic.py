@@ -4,10 +4,9 @@ import matplotlib.pyplot as plt
 
 import jax
 import jax.numpy as jnp
-from jax import jacfwd
 
 from utils import plot_classification
-from optim import newton
+from logistic_ho import newton_logistic
 
 key = jax.random.PRNGKey(123)
 rng = default_rng(seed=123)
@@ -31,45 +30,10 @@ X[0:n2, :] = X[0:n2, :] + 1.0
 X[:, p] = 1.0
 X = jnp.array(X)
 
-
-def grad_logistic(X, y, alpha, beta):
-    logits = jnp.exp(X @ beta)
-    logits = logits / (1 + logits)
-    return X.T @ (logits - y) + alpha * beta
-
-
-def hessian_logistic(X, y, alpha, beta):
-    logits = jnp.exp(X @ beta)
-    logits = logits / (1 + logits)
-    return (X * logits * (1 - logits)).T @ X + alpha * jnp.eye(beta.size)
-
-
 # Regularization
 alpha = 1.0
+beta_final, grad_final = newton_logistic(X, y, alpha, beta, max_iter=50, with_grad = True)
 
-
-def newton_logistic(X, y, alpha, beta0, max_iter=50):
-    def grad_f(beta):
-        return grad_logistic(X, y, alpha, beta)
-
-    def hess_f(beta):
-        return hessian_logistic(X, y, alpha, beta)
-
-    hbeta = newton(grad_f, hess_f, beta0, max_iter=max_iter)
-    return hbeta
-
-
-beta_final = newton_logistic(X, y, alpha, beta, max_iter=50)
-
-# One step of Newton
-
-jac_newton = jacfwd(newton_logistic, argnums=2)  # diff wrt alpha
-one_step_jac = jac_newton(X, y, alpha, beta_final, max_iter=1)
-np.testing.assert_array_almost_equal(
-    one_step_jac
-    + jnp.linalg.solve(hessian_logistic(X, y, alpha, beta_final), beta_final),
-    np.zeros_like(beta_final),
-)
 
 # Plot
 
