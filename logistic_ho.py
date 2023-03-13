@@ -10,7 +10,7 @@ def loss_logistic(X, y, alpha, beta):
     logits = logits / (1 + logits)
     return -1 / n_samples * jnp.sum(
         y * jnp.log(logits) + (1 - y) * jnp.log(1 - logits)
-    ) + jnp.exp(alpha) * jnp.sum(beta**2)
+    ) + jnp.exp(alpha) / 2 * jnp.sum(beta**2)
 
 
 def grad_logistic(X, y, alpha, beta):
