@@ -1,6 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import jacfwd
+from sklearn.linear_model import LogisticRegression
 from optim import newton
 
 
@@ -43,7 +44,7 @@ def hessian_logistic(X, y, alpha, beta):
     )
 
 
-def newton_logistic(X, y, alpha, beta0, max_iter=50, with_grad=False):
+def newton_logistic(X, y, alpha, beta0, max_iter=50, solver="local", with_grad=False):
     """Newton's method for logistic regression.
     Args:
         X: Design matrix.
@@ -59,7 +60,15 @@ def newton_logistic(X, y, alpha, beta0, max_iter=50, with_grad=False):
     def hess_f(beta):
         return hessian_logistic(X, y, alpha, beta)
 
-    hbeta = newton(grad_f, hess_f, beta0, max_iter=max_iter)
+    if solver == "local":
+        hbeta = newton(grad_f, hess_f, beta0, max_iter=max_iter)
+    else:
+        clf = LogisticRegression(
+            solver=solver, C=1. / (np.exp(alpha) * X.shape[0]),
+            penalty='l2', fit_intercept=False, tol=1e-15, max_iter=max_iter
+        )
+        clf.fit(X, y)
+        hbeta = clf.coef_.flatten()
 
     if with_grad:
         jac_newton = jacfwd(newton_logistic, argnums=2)  # diff wrt alpha
@@ -70,10 +79,9 @@ def newton_logistic(X, y, alpha, beta0, max_iter=50, with_grad=False):
 
 
 def logistic_parameter_selection(
-    X_train, X_val, y_train, y_val, alpha0, rho0, max_iter=10, retall=False
+        X_train, X_val, y_train, y_val, alpha0, rho, max_iter=10, retall=False, solver="local"
 ):
     alpha = alpha0
-    rho0 = rho
     hbeta = jnp.zeros(X_train.shape[1])
     if retall:
         alphas = np.zeros(max_iter + 1)
@@ -81,7 +89,7 @@ def logistic_parameter_selection(
         losses = np.zeros(max_iter + 1)
         losses[0] = loss_logistic(X_val, y_val, alpha, hbeta)
     for i in range(max_iter):
-        hbeta, hjac = newton_logistic(X_train, y_train, alpha, hbeta, with_grad=True)
+        hbeta, hjac = newton_logistic(X_train, y_train, alpha, hbeta, with_grad=True, solver=solver)
         grad_outer = (grad_logistic(X_val, y_val, -jnp.inf, hbeta).T @ hjac.T).T
         alpha = alpha - rho * grad_outer
         if retall:

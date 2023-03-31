@@ -6,13 +6,14 @@ import jax
 import jax.numpy as jnp
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, load_iris
+from sklearn.linear_model import LogisticRegressionCV
 from libsvmdata.datasets import fetch_libsvm
 
 from utils import plot_classification
 from logistic_ho import newton_logistic, logistic_parameter_selection, loss_logistic
 
-key = jax.random.PRNGKey(123)
-rng = default_rng(seed=123)
+key = jax.random.PRNGKey(142)
+rng = default_rng(seed=142)
 
 setting = "random"
 
@@ -34,11 +35,13 @@ if setting == "2dcloud":
     X[0:n2, :] = X[0:n2, :] + 1.0
     X[:, p] = 1.0
 elif setting == "random":
-    n = 800
-    p = 50
+    n = 500
+    p = 100
     beta = jnp.zeros(p)
     X, y = make_classification(n_samples=n, n_features=p)
+    X = (X - X.mean()) / X.std()
 elif setting == "libsvm":
+    # FIX: should be 0,1 not -1,1
     X, y = fetch_libsvm('rcv1.binary')
     X = X[:, :100].todense()
     n, p = X.shape
@@ -56,13 +59,21 @@ X_train, X_val, y_train, y_val = (
 
 # Regularization
 alpha0 = 0.0
-rho = 0.1
-alpha, alphas, losses = logistic_parameter_selection(X_train, X_val, y_train, y_val, alpha0, rho, max_iter=10000, retall=True)
-beta_final = newton_logistic(X_train, y_train, alpha, beta, max_iter=50)
+rho = 1.0
+solver = "lbfgs"
+alpha, alphas, losses = logistic_parameter_selection(X_train, X_val, y_train, y_val, alpha0, rho, max_iter=200, retall=True, solver=solver)
+beta_final = newton_logistic(X_train, y_train, alpha, beta, max_iter=50, solver=solver)
+
+Cs = np.logspace(-5, 5, 1000)
+clf = LogisticRegressionCV(Cs=Cs, fit_intercept=False, refit=False, solver=solver).fit(X_train, y_train)
+
+print(clf.C_[0], np.exp(alpha))
+print(loss_logistic(X,y,-np.inf,clf.coef_.flatten()),
+      loss_logistic(X,y,-np.inf,beta_final))
 
 fig, ax = plt.subplots(1,2)
-ax[0].plot(losses)
-ax[1].plot(alphas)
+ax[0].semilogy(np.abs(losses[:5000] - losses[-1]))
+ax[1].plot(alphas[:5000])
 plt.show()
 
 ## Optuna
@@ -83,7 +94,6 @@ plt.show()
 # Plot
 
 # fig_after, ax_after = plot_classification(
-#     X_val, y_val, [beta, beta_final], titles=["Initialization", "After training"]
+#     X, y, [clf.coef_.flatten(), beta_final], titles=["CV", "GD"]
 # )
-
 # plt.show()
