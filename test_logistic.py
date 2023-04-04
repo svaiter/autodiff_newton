@@ -60,20 +60,22 @@ X_train, X_val, y_train, y_val = (
 # Regularization
 alpha0 = 0.0
 rho = 1.0
+max_iter = 200
 solver = "lbfgs"
-alpha, alphas, losses = logistic_parameter_selection(X_train, X_val, y_train, y_val, alpha0, rho, max_iter=200, retall=True, solver=solver)
-beta_final = newton_logistic(X_train, y_train, alpha, beta, max_iter=50, solver=solver)
+alpha, alphas, losses = logistic_parameter_selection(X_train, X_val, y_train, y_val, alpha0, rho, max_iter=max_iter, retall=True, solver=solver)
+beta_final = newton_logistic(X_train, y_train, alpha, beta, max_iter=200, solver=solver)
 
-Cs = np.logspace(-5, 5, 1000)
+Cs = np.logspace(-5, 5, max_iter)
 clf = LogisticRegressionCV(Cs=Cs, fit_intercept=False, refit=False, solver=solver).fit(X_train, y_train)
+loss_cv, loss_gd = loss_logistic(X_val,y_val,-np.inf,clf.coef_.flatten()), loss_logistic(X,y,-np.inf,beta_final)
 
 print(clf.C_[0], np.exp(alpha))
-print(loss_logistic(X,y,-np.inf,clf.coef_.flatten()),
-      loss_logistic(X,y,-np.inf,beta_final))
+print(loss_cv, loss_gd)
 
-fig, ax = plt.subplots(1,2)
-ax[0].semilogy(np.abs(losses[:5000] - losses[-1]))
-ax[1].plot(alphas[:5000])
+fig, ax = plt.subplots(1,1)
+ax.semilogy(range(max_iter+1), np.abs(losses - losses[-1]))
+# ax[1].plot(range(max_iter+1), losses) # useless since show the regularized loss!!
+# ax[1].axline((0, loss_cv), (max_iter, loss_cv), color="green")
 plt.show()
 
 ## Optuna
