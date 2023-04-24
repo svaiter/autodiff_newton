@@ -80,10 +80,12 @@ colors = viridis(np.linspace(0, 1, len(str_traces)))
 for t, theta_fac in enumerate(theta_facs):
     for r, lr in enumerate(lrs):
         for j, str_trace in enumerate(str_traces):
-            ax[t, r].scatter(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, color=colors[j])
-            ax[t, r].plot(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, '', label='_nolegend_', color=colors[j])
-            ax[t, r].scatter(times[t,j,r,:].T, norm_ws[t,j,r,:].T, marker='x', label='_nolegend_', color=colors[j])
-            ax[t, r].plot(times[t,j,r,:].T, norm_ws[t,j,r,:].T, '--', label='_nolegend_', color=colors[j])
+            # ax[t, r].scatter(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, color=colors[j])
+            # ax[t, r].plot(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, '', label='_nolegend_', color=colors[j])
+            # ax[t, r].scatter(times[t,j,r,:].T, norm_ws[t,j,r,:].T, marker='x', label='_nolegend_', color=colors[j])
+            # ax[t, r].plot(times[t,j,r,:].T, norm_ws[t,j,r,:].T, '--', label='_nolegend_', color=colors[j])
+            ax[t, r].scatter(times[t,j,r,:].T, np.exp(0.5*(np.log(norm_dthetahats[t,j,r,:].T) + np.log(norm_ws[t,j,r,:].T))), color=colors[j])
+            ax[t, r].plot(times[t,j,r,:].T, np.exp(0.5*(np.log(norm_dthetahats[t,j,r,:].T) + np.log(norm_ws[t,j,r,:].T))), label='_nolegend_', color=colors[j])
         ax[t, r].set_yscale("log")
         ax[t, r].set_xlabel("Time (s)")
         ax[t, r].set_title(lrs_s[r])
