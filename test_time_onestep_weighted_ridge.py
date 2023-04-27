@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from libsvmdata import fetch_libsvm
 from sklearn.datasets import make_regression
-from sklearn.linear_model import Ridge
 
 def generate_matrix(n, p, cond):
     X = np.random.randn(n, p)
@@ -14,8 +13,9 @@ def generate_matrix(n, p, cond):
     return X
 
 X,y = make_regression(400,60,effective_rank=2)
+#X,y = make_regression(2000,200,effective_rank=2)
 # y = np.random.randn(100)
-#X, y = fetch_libsvm("breast-cancer")
+X, y = fetch_libsvm("cpusmall")
 n, p = X.shape
 
 big_step = 1000
@@ -74,23 +74,25 @@ for t, alpha_fac in enumerate(alpha_facs):
             times[t, j, r, :] = ltimes + tid
 
 #### DISPLAY
-fig, ax = plt.subplots(2, 2, figsize=(12, 8), sharex=True)
+import matplotlib
+matplotlib.rcParams.update({'font.size': 10, 'figure.dpi':300})
+fig, axs = plt.subplots(2, 2, figsize=(12, 6), sharex=True)
 lrs_s = ["$1/L$", "$2/(\mu + L)$"]
+legends = ["autodiff (Jacobian)", "autodiff (iter.)", "1-step (Jacobian)", "1-step (iter.)", "implicit diff (Jacobian)", "implicit diff (iter.)"]
 viridis = cm.get_cmap('viridis', len(str_traces))
 colors = viridis(np.linspace(0, 1, len(str_traces)))
 for t, alpha_fac in enumerate(alpha_facs):
     for r, lr in enumerate(lrs):
         for j, str_trace in enumerate(str_traces):
-            ax[t, r].scatter(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, color=colors[j])
-            ax[t, r].plot(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, '', label='_nolegend_', color=colors[j])
-            ax[t, r].scatter(times[t,j,r,:].T, norm_ws[t,j,r,:].T, marker='x', label='_nolegend_', color=colors[j])
-            ax[t, r].plot(times[t,j,r,:].T, norm_ws[t,j,r,:].T, '--', label='_nolegend_', color=colors[j])
-        ax[t, r].set_yscale("log")
-        ax[t, r].set_xlabel("Time (s)")
-        ax[t, r].set_title(lrs_s[r])
-        ax[t, 0].set_ylabel("Relative suboptimality")
+            axs[t, r].scatter(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, color=colors[j])
+            axs[t, r].plot(times[t,j,r,:].T, norm_dthetahats[t,j,r,:].T, label='_nolegend_', color=colors[j])
+            axs[t, r].scatter(times[t,j,r,:].T, norm_ws[t,j,r,:].T, marker='x', color=colors[j])
+            axs[t, r].plot(times[t,j,r,:].T, norm_ws[t,j,r,:].T, '--', label='_nolegend_', color=colors[j])
+        axs[t, r].set_yscale("log")
+        axs[t, r].set_xlabel("Time (s)")
+        axs[0, r].set_title(lrs_s[r])
+        axs[t, 0].set_ylabel("Relative suboptimality")
 
-legends = ["autodiff", "1-step", "implicit diff"]
 fig.legend(legends, loc='upper right', bbox_to_anchor=(1,1), ncol=len(legends), bbox_transform=fig.transFigure)
 
-plt.savefig("1step.pdf")
+plt.savefig("1step.pdf",bbox_inches='tight')
