@@ -16,8 +16,8 @@ config.update("jax_enable_x64", True)
 from QPIPutils import *
 
 
-repeat = 5  # 10
-repMean = 2  # 5
+repeat = 5
+repMean = 2
 nExp = 4
 
 
